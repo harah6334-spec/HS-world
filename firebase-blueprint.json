@@ -1,0 +1,34 @@
+{
+  "entities": {
+    "Transaction": {
+      "title": "Transaction",
+      "description": "A payment transaction",
+      "type": "object",
+      "properties": {
+        "date": {
+          "type": "string",
+          "description": "ISO date string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "amount": {
+          "type": "number"
+        },
+        "status": {
+          "type": "string",
+          "enum": ["completed"]
+        }
+      },
+      "required": ["date", "description", "amount", "status"]
+    }
+  },
+  "firestore": {
+    "/transactions/{transactionId}": {
+      "schema": {
+        "$ref": "#/entities/Transaction"
+      },
+      "description": "Global transactions log for the portfolio"
+    }
+  }
+}

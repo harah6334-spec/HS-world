@@ -1,0 +1,38 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // 0. Global Safety Net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Phase 3: Primitive Definition
+    function isValidId(id) { 
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$'); 
+    }
+    function incoming() { return request.resource.data; }
+    function existing() { return resource.data; }
+    
+    // Validation helper
+    function isValidTransaction(data) {
+      return data.keys().hasAll(['date', 'description', 'amount', 'status']) &&
+             data.keys().size() == 4 &&
+             data.date is string && data.date.size() > 0 && data.date.size() <= 30 &&
+             data.description is string && data.description.size() > 0 && data.description.size() <= 100 &&
+             data.amount is number && data.amount > 0 && data.amount <= 100000 &&
+             data.status == 'completed';
+    }
+
+    match /transactions/{transactionId} {
+      // Anyone can read the public transaction log
+      allow read: if true;
+      
+      // Allow creation of transactions. Anyone can create to simulate webhook success.
+      allow create: if isValidId(transactionId) && isValidTransaction(incoming());
+      
+      // No updates or deletes allowed
+      allow update, delete: if false;
+    }
+  }
+}
